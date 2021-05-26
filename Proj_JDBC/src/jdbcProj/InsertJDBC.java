@@ -27,7 +27,7 @@ public class InsertJDBC {
 				pstmt.setInt(1, i);
 				pstmt.setInt(2, i);
 				pstmt.setInt(3, i+1);
-				pstmt.setString(4, "special DC");
+				pstmt.setString(4, "special DC"+i);
 				pstmt.executeUpdate();
 			}
 			
@@ -35,7 +35,7 @@ public class InsertJDBC {
 			for(int i=0;i<20000;i++) {
 				pstmt.setInt(1, i);
 				pstmt.setString(2,"chung-ang univ");
-				pstmt.setString(3,"guenwookim");
+				pstmt.setString(3,"guenwookim"+i);
 				pstmt.setString(4, "010-0000-0000");
 				pstmt.setString(5, "guenwoo@naver.com");
 				pstmt.executeUpdate();
@@ -55,7 +55,7 @@ public class InsertJDBC {
 			pstmt = conn.prepareStatement(restaurantInsertSql);
 			for(int i =0; i <10000;i++) {
 				pstmt.setInt(1, i);
-				pstmt.setString(2,"restaurant");
+				pstmt.setString(2,"restaurant"+i/2);
 				pstmt.setString(3,"chung-ang univ");
 				pstmt.setString(4,"010-0000-0000");
 				pstmt.setInt(5, (i/2500)*1000);
@@ -67,7 +67,7 @@ public class InsertJDBC {
 			for(int i =0;i<50000;i++) {
 				pstmt.setInt(1, i);
 				pstmt.setInt(2,i%10000);
-				pstmt.setString(3,"food");
+				pstmt.setString(3,"food"+i);
 				pstmt.setString(4, "image");
 				pstmt.setInt(5,i);
 				pstmt.executeUpdate();
