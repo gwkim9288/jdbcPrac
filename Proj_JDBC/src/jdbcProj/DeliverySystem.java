@@ -30,20 +30,20 @@ public class DeliverySystem {
 			System.out.printf("입력:");
 			int input = scan.nextInt();
 			scan.nextLine();
-			if(input == 2)
+			System.out.println("---------------------------------------------------------------");
+			if(input == 2) {
 				createAccount(conn);
+				System.out.println("---------------------------------------------------------------");
+			}
 			while (true) {
 				id = login(conn);
-				System.out.println(id);
 				if (id >= 0)
 					break;
+				System.out.println("---------------------------------------------------------------");
+
 			}
 			while (check) {
 
-//				conn = DriverManager.getConnection(
-//						"jdbc:mysql://localhost:3306/dbs?useUnicode=true&useJDBCComplia ntTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
-//						"root", "19m28b37!");
-				
 				System.out.println("원하시는 작업을 선택해주세요:");
 				System.out.println("1. 개인정보 수정(주소,전화번호)");
 				System.out.println("2. 주문하기");
@@ -53,15 +53,23 @@ public class DeliverySystem {
 				int command = scan.nextInt();
 				scan.nextLine();
 				System.out.println();
+				System.out.println("---------------------------------------------------------------");
+
 				switch (command) {
 				case 1:
 					modifyAccount(conn);
+					System.out.println("---------------------------------------------------------------");
+
 					break;
 				case 2:
 					orderFood(conn);
+					System.out.println("---------------------------------------------------------------");
+
 					break;
 				case 3:
 					createReview(conn);
+					System.out.println("---------------------------------------------------------------");
+
 					break;
 				default:
 					System.exit(1);
@@ -72,16 +80,15 @@ public class DeliverySystem {
 		}
 	}
 
-	public static void firstPage() {
-		System.out.println();
-	}
 
 	public static int login(Connection conn) throws SQLException {
 		int id=-1;
 		
+		//Transaction T1:
 		try {
 			conn.setAutoCommit(false);
 			
+			//SQL S1-1
 			String findAccountByName = "select * from account where name = ?";
 
 			System.out.println("로그인해주세요(이름): ");
@@ -106,12 +113,76 @@ public class DeliverySystem {
 		}
 		return id;
 	}
+	
+	public static void createAccount(Connection conn) throws SQLException {
+		//SQL S2-1
+		String findAccountByName = "select * from account where name = ?";
+		//SLQ S2-2
+		String createAccount = "insert into account values (?,?,?,?,?)";
+		//SQL S2-3
+		String maxAccountId = "select max(id) from account";
+		
+		String name,email,phoneNum,address;
+		
+		//Transaction T2
+		try {
+			conn.setAutoCommit(false);
+			
+			System.out.println("정보를 입력해 주세요.");
+			PreparedStatement pstmt = conn.prepareStatement(findAccountByName);
 
+			//중복되는 이름인지 검사 
+			while(true) {
+				System.out.println("이름(10자이내):");
+				name = scan.nextLine();
+				pstmt.setString(1,name);
+				rs = pstmt.executeQuery();
+				if(rs == null || !rs.next())
+					break;
+				System.out.println("이미 존재하는 이름입니다.");
+			}
+			System.out.println("주소:");
+			address = scan.nextLine();
+			System.out.println("핸드폰 번호:");
+			phoneNum = scan.nextLine();
+			System.out.println("이메일:");
+			email = scan.nextLine();
+
+			//account 테이블의 마지막 id 번호 찾기 
+			pstmt = conn.prepareStatement(maxAccountId);
+			rs = pstmt.executeQuery();
+			rs.next();
+			int max = rs.getInt("max(id)");
+			
+			//account 생성하기
+			pstmt = conn.prepareStatement(createAccount);
+			pstmt.setInt(1, max+1);
+			pstmt.setString(2, address);
+			pstmt.setString(3,name);
+			pstmt.setString(4,phoneNum);
+			pstmt.setString(5, email);
+			pstmt.executeUpdate();
+			
+			System.out.println("회원생성이 완료되었습니다.");
+			
+			conn.commit();
+		} catch (Exception e) {
+			if (conn != null) {
+				System.out.println(e);
+				// 에러가 발생하면 롤백
+				conn.rollback();
+			}
+		} 
+	}
+
+	
 	public static void modifyAccount(Connection conn) throws SQLException {
+		//SQL S3-1
 		String modifyAddress = "update account set address = ? where id = ?";
+		//SQL S3-2
 		String modifyPhoneNum = "update account set phone_number = ? where id = ?";
 
-		
+		//Transaction T3
 		try {
 			conn.setAutoCommit(false);
 			
@@ -145,15 +216,24 @@ public class DeliverySystem {
 		}
 	}
 
+	
 	public static void orderFood(Connection conn) throws SQLException {
 
+		//SQL S4-1
 		String findRes = "select * from restaurant where name = ?";
+		//SQL S4-2
 		String findProductByResId = "select * from product where restaurant_id = ?";
+		//SQL S4-3
 		String findProductById = "select * from product where product_id =?";
+		//SQL S4-4
 		String createOrder = "insert into `order` values(?,?,?,?,?)";
+		//SQL S4-5
 		String findMaxOrderId = "select max(order_id) from `order`";
+		//SQL S4-6
 		String findResById = "select * from restaurant where restaurant_id = ?";
+		
 
+		//Transaction T4
 		try {
 			conn.setAutoCommit(false);
 			// 식당 이름으로 검색하기
@@ -252,9 +332,14 @@ public class DeliverySystem {
 	}
 
 	public static void createReview(Connection conn) throws SQLException {
+		//SQL S5-1
 		String findRes = "select * from restaurant where name = ?";
+		//SQL S5-2
 		String createReview = "insert into review values(?,?,?,?)";
+		//SQL S5-3
 		String maxReview = "select max(review_id) from review";
+		
+		//Transaction T5
 		try {
 			conn.setAutoCommit(false);
 			// 식당 이름으로 검색하기
@@ -313,59 +398,5 @@ public class DeliverySystem {
 		}
 	}
 	
-	public static void createAccount(Connection conn) throws SQLException {
-		String findAccountByName = "select * from account where name = ?";
-		String createAccount = "insert into account values (?,?,?,?,?)";
-		String maxAccountId = "select max(id) from account";
-		String name,email,phoneNum,address;
-		
-		try {
-			conn.setAutoCommit(false);
-			
-			System.out.println("정보를 입력해 주세요.");
-			PreparedStatement pstmt = conn.prepareStatement(findAccountByName);
-
-			//중복되는 이름인지 검사 
-			while(true) {
-				System.out.println("이름(10자이내):");
-				name = scan.nextLine();
-				pstmt.setString(1,name);
-				rs = pstmt.executeQuery();
-				if(rs == null || !rs.next())
-					break;
-				System.out.println("이미 존재하는 이름입니다.");
-			}
-			System.out.println("주소:");
-			address = scan.nextLine();
-			System.out.println("핸드폰 번호:");
-			phoneNum = scan.nextLine();
-			System.out.println("이메일:");
-			email = scan.nextLine();
-
-			//account 테이블의 마지막 id 번호 찾기 
-			pstmt = conn.prepareStatement(maxAccountId);
-			rs = pstmt.executeQuery();
-			rs.next();
-			int max = rs.getInt("max(id)");
-			
-			//account 생성하기
-			pstmt = conn.prepareStatement(createAccount);
-			pstmt.setInt(1, max+1);
-			pstmt.setString(2, address);
-			pstmt.setString(3,name);
-			pstmt.setString(4,phoneNum);
-			pstmt.setString(5, email);
-			pstmt.executeUpdate();
-			
-			System.out.println("회원생성이 완료되었습니다.");
-			
-			conn.commit();
-		} catch (Exception e) {
-			if (conn != null) {
-				System.out.println(e);
-				// 에러가 발생하면 롤백
-				conn.rollback();
-			}
-		} 
-	}
+	
 }
